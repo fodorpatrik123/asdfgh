@@ -7,13 +7,14 @@ import json
 
 app = Flask(__name__)
 
-def get_ticker_from_url(url):
+def get_ticker_from_scraped_url(url):
     parsed_url = urlparse(url)
-    query_params = parse_qs(parsed_url.query)
-    ticker = query_params.get('q', [''])[0].upper()
+    path_segments = parsed_url.path.split('/')
+    # Assuming the ticker is in the last segment of the path
+    ticker = path_segments[-1].upper() if path_segments else ''
     return ticker
 
-def scrape_webpages(urls, div_id, class_name, limit=5):
+def scrape_webpages(urls, data_test_attribute, class_name, limit=5):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
     
     results = []
@@ -21,15 +22,15 @@ def scrape_webpages(urls, div_id, class_name, limit=5):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            div = soup.find(id=div_id)
+            div = soup.find('div', {'data-test': data_test_attribute})
             
             if div:
                 elements = div.find_all(class_=class_name, limit=limit)
                 for i, element in enumerate(elements, 1):
                     text = element.get_text().strip()
-                    time_element = element.find_next(class_='js-date-relative txt-muted h-100')
+                    time_element = element.find_next(class_='LatestNews-timestamp')
                     time_text = time_element.get_text().strip() if time_element else 'Nincs időbélyeg'
-                    ticker = get_ticker_from_url(url)
+                    ticker = get_ticker_from_scraped_url(url)
                     results.append({'ticker': ticker, 'news': text, 'time': time_text})
             else:
                 results.append({'error': 'Nem létezik ilyen TICKER'})
@@ -67,14 +68,14 @@ def ticker():
 @app.route('/result', methods=['POST'])
 def result():
     tickers = load_tickers()
-    base_url = 'https://www.marketscreener.com/search/?q='
+    base_url = 'https://www.cnbc.com/quotes/'
     urls = [base_url + ticker.strip() for ticker in tickers]
-    
-    div_id = 'advanced-search__news'
-    class_name = 'w-100'
-    
-    results = scrape_webpages(urls, div_id, class_name)
-    
+
+    data_test_attribute = 'QuoteNews-2'  # Replace 'QuoteNews-2' with the actual data-test attribute value
+    class_name = 'LatestNews-headline'
+
+    results = scrape_webpages(urls, data_test_attribute, class_name)
+
     return render_template('result.html', results=results)
 
 @app.route('/manage')
