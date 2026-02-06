@@ -7,7 +7,8 @@ from sqlalchemy import or_, func
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev-secret-key-change-this'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rpa_projects.db'
+# Using v2 to force new schema creation on user machine
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rpa_projects_v2.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
