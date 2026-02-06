@@ -1,103 +1,138 @@
-from flask import Flask, render_template, request, redirect, url_for
-import time
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse, parse_qs
-import json
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+from werkzeug.utils import secure_filename
+from models import db, RPAProject
+from forms import ProjectForm
+from sqlalchemy import or_
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'dev-secret-key-change-this'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rpa_projects.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'uploads'
 
-def get_ticker_from_scraped_url(url):
-    parsed_url = urlparse(url)
-    path_segments = parsed_url.path.split('/')
-    # Assuming the ticker is in the last segment of the path
-    ticker = path_segments[-1].upper() if path_segments else ''
-    return ticker
+# Ensure upload directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-def scrape_webpages(urls, data_test_attribute, class_name, limit=5):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    
-    results = []
-    for url in urls:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            div = soup.find('div', {'data-test': data_test_attribute})
-            
-            if div:
-                elements = div.find_all(class_=class_name, limit=limit)
-                for i, element in enumerate(elements, 1):
-                    text = element.get_text().strip()
-                    time_element = element.find_next(class_='LatestNews-timestamp')
-                    time_text = time_element.get_text().strip() if time_element else 'Nincs időbélyeg'
-                    ticker = get_ticker_from_scraped_url(url)
-                    results.append({'ticker': ticker, 'news': text, 'time': time_text})
-            else:
-                results.append({'error': 'Nem létezik ilyen TICKER'})
-        else:
-            results.append({'error': 'Hiba a válaszkóddal'})
-    
-    return results
+db.init_app(app)
 
-def save_tickers(tickers):
-    with open('tickers.json', 'w') as file:
-        json.dump(tickers, file)
+with app.app_context():
+    db.create_all()
 
-def load_tickers():
-    try:
-        with open('tickers.json', 'r') as file:
-            tickers = json.load(file)
-    except FileNotFoundError:
-        tickers = []
-    return tickers
+def save_file(file_data):
+    if file_data:
+        filename = secure_filename(file_data.filename)
+        # Avoid overwriting or conflicts - simple approach: timestamp or uuid could be added
+        # For now, just save.
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file_data.save(filepath)
+        return filename
+    return None
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    search = request.args.get('search', '')
+    status_filter = request.args.get('status', '')
+    missing_docs = request.args.get('missing_docs', '')
 
-@app.route('/ticker', methods=['GET', 'POST'])
-def ticker():
-    if request.method == 'POST':
-        tickers = request.form.get('tickers')
-        user_tickers_list = tickers.split(',')
-        save_tickers(user_tickers_list)
-        return render_template('ticker.html', tickers=user_tickers_list)
-    tickers = load_tickers()
-    return render_template('ticker.html', tickers=tickers)
+    query = RPAProject.query
 
-@app.route('/result', methods=['POST'])
-def result():
-    tickers = load_tickers()
-    base_url = 'https://www.cnbc.com/quotes/'
-    urls = [base_url + ticker.strip() for ticker in tickers]
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(or_(
+            RPAProject.developer_name.like(search_term),
+            RPAProject.requestor.like(search_term)
+        ))
 
-    data_test_attribute = 'QuoteNews-2'  # Replace 'QuoteNews-2' with the actual data-test attribute value
-    class_name = 'LatestNews-headline'
+    if status_filter:
+        query = query.filter(RPAProject.status == status_filter)
 
-    results = scrape_webpages(urls, data_test_attribute, class_name)
+    if missing_docs == 'on':
+        query = query.filter(or_(
+            RPAProject.doc_business == None,
+            RPAProject.doc_test == None,
+            RPAProject.doc_ops == None,
+            RPAProject.doc_business == '',
+            RPAProject.doc_test == '',
+            RPAProject.doc_ops == ''
+        ))
 
-    return render_template('result.html', results=results)
+    projects = query.order_by(RPAProject.arrival_date.desc()).all()
 
-@app.route('/manage')
-def manage():
-    tickers = load_tickers()
-    return render_template('manage.html', tickers=tickers)
+    # Get all unique statuses for the filter dropdown
+    # Hardcoded or dynamic? Hardcoded in form, so maybe hardcoded here or distinct query.
+    # Let's use the list from the form for consistency, or just distinct from DB.
+    # Distinct from DB is safer for data integrity but form list is better for UX.
+    statuses = ['Új', 'Folyamatban', 'Tesztelés', 'Kész', 'Élesítve', 'Felfüggesztve']
 
-@app.route('/add_ticker', methods=['POST'])
-def add_ticker():
-    new_ticker = request.form.get('new_ticker')
-    tickers = load_tickers()
-    tickers.append(new_ticker)
-    save_tickers(tickers)
-    return redirect('/manage')
+    return render_template('index.html', projects=projects, search=search, status_filter=status_filter, missing_docs=missing_docs, statuses=statuses)
 
-@app.route('/delete_ticker', methods=['POST'])
-def delete_ticker():
-    delete_ticker = request.form.get('delete_ticker')
-    tickers = load_tickers()
-    if delete_ticker in tickers:
-        tickers.remove(delete_ticker)
-        save_tickers(tickers)
-    return redirect('/manage')
+@app.route('/create', methods=['GET', 'POST'])
+def create():
+    form = ProjectForm()
+    if form.validate_on_submit():
+        project = RPAProject(
+            developer_name=form.developer_name.data,
+            status=form.status.data,
+            arrival_date=form.arrival_date.data,
+            end_date=form.end_date.data,
+            percentage=form.percentage.data,
+            fte=form.fte.data,
+            requestor=form.requestor.data
+        )
+
+        if form.doc_business.data:
+            project.doc_business = save_file(form.doc_business.data)
+        if form.doc_test.data:
+            project.doc_test = save_file(form.doc_test.data)
+        if form.doc_ops.data:
+            project.doc_ops = save_file(form.doc_ops.data)
+
+        db.session.add(project)
+        db.session.commit()
+        flash('Projekt sikeresen létrehozva!', 'success')
+        return redirect(url_for('index'))
+    return render_template('create_edit.html', form=form, title="Új Projekt Felvétele")
+
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    project = RPAProject.query.get_or_404(id)
+    form = ProjectForm(obj=project)
+
+    if form.validate_on_submit():
+        project.developer_name = form.developer_name.data
+        project.status = form.status.data
+        project.arrival_date = form.arrival_date.data
+        project.end_date = form.end_date.data
+        project.percentage = form.percentage.data
+        project.fte = form.fte.data
+        project.requestor = form.requestor.data
+
+        # Handle file updates only if new file provided
+        if form.doc_business.data:
+            project.doc_business = save_file(form.doc_business.data)
+        if form.doc_test.data:
+            project.doc_test = save_file(form.doc_test.data)
+        if form.doc_ops.data:
+            project.doc_ops = save_file(form.doc_ops.data)
+
+        db.session.commit()
+        flash('Projekt sikeresen frissítve!', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('create_edit.html', form=form, title="Projekt Szerkesztése")
+
+@app.route('/delete/<int:id>', methods=['POST'])
+def delete(id):
+    project = RPAProject.query.get_or_404(id)
+    db.session.delete(project)
+    db.session.commit()
+    flash('Projekt törölve.', 'info')
+    return redirect(url_for('index'))
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')

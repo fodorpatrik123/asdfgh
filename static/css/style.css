@@ -1,0 +1,114 @@
+:root {
+    --primary-blue: #0d6efd;
+    --dark-blue: #0a4297;
+    --light-blue: #e7f1ff;
+    --bg-color: #f0f4f8;
+    --hover-color: #d1e7dd;
+    --text-dark: #333;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-dark);
+}
+
+.navbar-dark.bg-primary-dark {
+    background-color: var(--dark-blue) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.bg-light-blue {
+    background-color: var(--light-blue);
+}
+
+.card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out;
+}
+
+/* Table Styling */
+.table thead th {
+    background-color: var(--dark-blue);
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 1rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.project-row {
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.project-row:hover {
+    background-color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    z-index: 10;
+    position: relative;
+}
+
+/* Document Icons */
+.doc-icon {
+    font-size: 1.2rem;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.doc-icon.has-doc {
+    background-color: #e7f1ff;
+    color: var(--primary-blue);
+}
+
+.doc-icon.has-doc:hover {
+    background-color: var(--primary-blue);
+    color: white;
+    transform: scale(1.1);
+}
+
+.doc-icon.missing-doc {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    cursor: help;
+}
+
+/* Progress Bar */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    background-color: var(--primary-blue) !important;
+    border-radius: 10px;
+}
+
+/* Form Controls */
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-blue);
+    border-color: var(--dark-blue);
+}
