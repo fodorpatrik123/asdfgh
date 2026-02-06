@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from werkzeug.utils import secure_filename
 from models import db, RPAProject
 from forms import ProjectForm
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev-secret-key-change-this'
@@ -20,13 +20,14 @@ with app.app_context():
     db.create_all()
 
 def save_file(file_data):
-    if file_data:
+    if file_data and hasattr(file_data, 'filename') and file_data.filename:
         filename = secure_filename(file_data.filename)
-        # Avoid overwriting or conflicts - simple approach: timestamp or uuid could be added
-        # For now, just save.
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file_data.save(filepath)
-        return filename
+        if filename:
+            # Avoid overwriting or conflicts - simple approach: timestamp or uuid could be added
+            # For now, just save.
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file_data.save(filepath)
+            return filename
     return None
 
 @app.route('/', methods=['GET'])
@@ -41,7 +42,8 @@ def index():
         search_term = f"%{search}%"
         query = query.filter(or_(
             RPAProject.developer_name.like(search_term),
-            RPAProject.requestor.like(search_term)
+            RPAProject.requestor.like(search_term),
+            RPAProject.project_name.like(search_term)
         ))
 
     if status_filter:
@@ -59,19 +61,35 @@ def index():
 
     projects = query.order_by(RPAProject.arrival_date.desc()).all()
 
-    # Get all unique statuses for the filter dropdown
-    # Hardcoded or dynamic? Hardcoded in form, so maybe hardcoded here or distinct query.
-    # Let's use the list from the form for consistency, or just distinct from DB.
-    # Distinct from DB is safer for data integrity but form list is better for UX.
-    statuses = ['Új', 'Folyamatban', 'Tesztelés', 'Kész', 'Élesítve', 'Felfüggesztve']
+    # KPIs: Count by Status
+    # We can do this with a query or just process the list if pagination wasn't an issue.
+    # Since we filter, maybe KPIs should reflect filtered data?
+    # Usually KPIs show global state or filtered state. "fent ilyen kpin mutatssa is hogy mennyi van miből"
+    # Let's show Global stats if no filter, or Filtered stats if filter active?
+    # Safer to show Stats based on the current View (filtered).
 
-    return render_template('index.html', projects=projects, search=search, status_filter=status_filter, missing_docs=missing_docs, statuses=statuses)
+    # Calculate counts from 'projects' list to match what is seen
+    status_counts = {}
+    statuses = ['Új', 'Folyamatban', 'Tesztelés', 'Kész', 'Élesítve', 'Felfüggesztve']
+    for s in statuses:
+        status_counts[s] = 0
+
+    for p in projects:
+        if p.status in status_counts:
+            status_counts[p.status] += 1
+        else:
+            # Fallback for unknown status
+            status_counts[p.status] = status_counts.get(p.status, 0) + 1
+
+    return render_template('index.html', projects=projects, search=search, status_filter=status_filter, missing_docs=missing_docs, statuses=statuses, status_counts=status_counts)
 
 @app.route('/create', methods=['GET', 'POST'])
 def create():
     form = ProjectForm()
     if form.validate_on_submit():
         project = RPAProject(
+            project_name=form.project_name.data,
+            description=form.description.data,
             developer_name=form.developer_name.data,
             status=form.status.data,
             arrival_date=form.arrival_date.data,
@@ -81,12 +99,18 @@ def create():
             requestor=form.requestor.data
         )
 
+        # Safe save
         if form.doc_business.data:
-            project.doc_business = save_file(form.doc_business.data)
+            filename = save_file(form.doc_business.data)
+            if filename: project.doc_business = filename
+
         if form.doc_test.data:
-            project.doc_test = save_file(form.doc_test.data)
+            filename = save_file(form.doc_test.data)
+            if filename: project.doc_test = filename
+
         if form.doc_ops.data:
-            project.doc_ops = save_file(form.doc_ops.data)
+            filename = save_file(form.doc_ops.data)
+            if filename: project.doc_ops = filename
 
         db.session.add(project)
         db.session.commit()
@@ -100,6 +124,8 @@ def edit(id):
     form = ProjectForm(obj=project)
 
     if form.validate_on_submit():
+        project.project_name = form.project_name.data
+        project.description = form.description.data
         project.developer_name = form.developer_name.data
         project.status = form.status.data
         project.arrival_date = form.arrival_date.data
@@ -108,13 +134,18 @@ def edit(id):
         project.fte = form.fte.data
         project.requestor = form.requestor.data
 
-        # Handle file updates only if new file provided
+        # Handle file updates only if new file provided and valid
         if form.doc_business.data:
-            project.doc_business = save_file(form.doc_business.data)
+            filename = save_file(form.doc_business.data)
+            if filename: project.doc_business = filename
+
         if form.doc_test.data:
-            project.doc_test = save_file(form.doc_test.data)
+            filename = save_file(form.doc_test.data)
+            if filename: project.doc_test = filename
+
         if form.doc_ops.data:
-            project.doc_ops = save_file(form.doc_ops.data)
+            filename = save_file(form.doc_ops.data)
+            if filename: project.doc_ops = filename
 
         db.session.commit()
         flash('Projekt sikeresen frissítve!', 'success')

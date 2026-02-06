@@ -1,10 +1,13 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, DateField, IntegerField, FloatField, SelectField, SubmitField
+from flask_wtf.file import FileField
+from wtforms import StringField, DateField, IntegerField, FloatField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Optional, NumberRange
 
 class ProjectForm(FlaskForm):
+    project_name = StringField('Fejlesztés neve', validators=[DataRequired()])
+    description = TextAreaField('Leírás', validators=[Optional()])
     developer_name = StringField('Fejlesztő neve', validators=[DataRequired()])
+
     status = SelectField('Státusz', choices=[
         ('Új', 'Új'),
         ('Folyamatban', 'Folyamatban'),
@@ -24,18 +27,9 @@ class ProjectForm(FlaskForm):
     fte = FloatField('FTE', validators=[Optional()])
     requestor = StringField('Igénylő', validators=[DataRequired()])
 
-    # Files
-    doc_business = FileField('Üzleti igény (doc, docx, pdf)', validators=[
-        Optional(),
-        FileAllowed(['doc', 'docx', 'pdf'], 'Csak dokumentumok tölthetők fel!')
-    ])
-    doc_test = FileField('Tesztjegyzőkönyv (doc, docx, pdf, xlsx)', validators=[
-        Optional(),
-        FileAllowed(['doc', 'docx', 'pdf', 'xlsx', 'xls'], 'Csak dokumentumok tölthetők fel!')
-    ])
-    doc_ops = FileField('Üzemeltetési dokumentáció (doc, docx, pdf)', validators=[
-        Optional(),
-        FileAllowed(['doc', 'docx', 'pdf'], 'Csak dokumentumok tölthetők fel!')
-    ])
+    # Files - No restrictions on file type
+    doc_business = FileField('Üzleti igény', validators=[Optional()])
+    doc_test = FileField('Tesztjegyzőkönyv', validators=[Optional()])
+    doc_ops = FileField('Üzemeltetési dokumentáció', validators=[Optional()])
 
     submit = SubmitField('Mentés')

@@ -11,6 +11,22 @@
                 <form method="POST" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
 
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.project_name.label }}</label>
+                        {{ form.project_name(class="form-control") }}
+                        {% for error in form.project_name.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.description.label }}</label>
+                        {{ form.description(class="form-control", rows="3") }}
+                        {% for error in form.description.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">{{ form.developer_name.label }}</label>
@@ -62,6 +78,7 @@
 
                     <hr class="my-4">
                     <h5 class="mb-3 text-muted"><i class="fas fa-paperclip me-2"></i>Dokumentumok</h5>
+                    <p class="text-muted small">Bármilyen fájltípus feltölthető.</p>
 
                     <div class="mb-3">
                         <label class="form-label">{{ form.doc_business.label }}</label>
