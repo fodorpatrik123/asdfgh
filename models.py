@@ -5,6 +5,8 @@ db = SQLAlchemy()
 
 class RPAProject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    project_name = db.Column(db.String(100), nullable=False, default="Névtelen Projekt")
+    description = db.Column(db.Text, nullable=True)
     developer_name = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(50), nullable=False, default='Új')
     arrival_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
@@ -20,4 +22,4 @@ class RPAProject(db.Model):
     requestor = db.Column(db.String(100), nullable=False)
 
     def __repr__(self):
-        return f'<RPAProject {self.id} - {self.developer_name}>'
+        return f'<RPAProject {self.id} - {self.project_name}>'

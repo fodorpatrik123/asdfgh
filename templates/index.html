@@ -1,14 +1,29 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<!-- KPI Cards -->
+<div class="row mb-4">
+    {% for status, count in status_counts.items() %}
+    <div class="col-md-2 mb-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center p-3">
+                <h6 class="text-muted text-uppercase small mb-2">{{ status }}</h6>
+                <h3 class="mb-0 fw-bold text-primary">{{ count }}</h3>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Filters -->
 <div class="row mb-4">
     <div class="col-md-12">
         <div class="card shadow-sm border-0">
             <div class="card-body bg-light-blue">
                 <form method="GET" action="{{ url_for('index') }}" class="row g-3 align-items-end">
                     <div class="col-md-4">
-                        <label for="search" class="form-label">Keresés (Fejlesztő / Igénylő)</label>
-                        <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Név...">
+                        <label for="search" class="form-label">Keresés (Név / Fejlesztő / Igénylő)</label>
+                        <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Projekt neve...">
                     </div>
                     <div class="col-md-3">
                         <label for="status" class="form-label">Státusz</label>
@@ -42,6 +57,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-primary text-white">
                     <tr>
+                        <th>Projekt Neve / Leírás</th>
                         <th>Fejlesztő / Igénylő</th>
                         <th>Státusz</th>
                         <th>Beérkezés / Vége</th>
@@ -54,6 +70,14 @@
                 <tbody>
                     {% for project in projects %}
                     <tr class="project-row">
+                        <td>
+                            <div class="fw-bold">{{ project.project_name }}</div>
+                            {% if project.description %}
+                            <div class="text-muted small text-truncate" style="max-width: 200px;" title="{{ project.description }}">
+                                {{ project.description }}
+                            </div>
+                            {% endif %}
+                        </td>
                         <td>
                             <div class="fw-bold">{{ project.developer_name }}</div>
                             <div class="text-muted small"><i class="fas fa-user-tag me-1"></i>{{ project.requestor }}</div>
@@ -131,7 +155,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">Nincs megjeleníthető projekt.</td>
+                        <td colspan="8" class="text-center py-4 text-muted">Nincs megjeleníthető projekt.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
