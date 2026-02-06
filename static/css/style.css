@@ -1,114 +1,198 @@
 :root {
-    --primary-blue: #0d6efd;
-    --dark-blue: #0a4297;
-    --light-blue: #e7f1ff;
-    --bg-color: #f0f4f8;
-    --hover-color: #d1e7dd;
-    --text-dark: #333;
+    /* Light Mode Variables */
+    --primary-color: #001f3f; /* Navy Blue */
+    --secondary-color: #0074D9; /* Lighter Blue */
+    --accent-color: #7FDBFF; /* Accent Blue */
+    --bg-color: #f4f6f9;
+    --card-bg: #ffffff;
+    --text-color: #111111;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --hover-bg: #e2e6ea;
+    --table-header-bg: #001f3f;
+    --table-header-text: #ffffff;
+    --table-bg: transparent;
+}
+
+[data-theme="dark"] {
+    /* Dark Mode Variables */
+    --primary-color: #001f3f; /* Keep Navy for brand */
+    --secondary-color: #39CCCC; /* Teal-ish for dark mode contrast */
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --text-muted: #adb5bd;
+    --border-color: #2c2c2c;
+    --hover-bg: #2c3e50;
+    --table-header-bg: #001f3f;
+    --table-header-text: #ffffff;
+    --table-bg: #1e1e1e;
 }
 
 body {
     background-color: var(--bg-color);
+    color: var(--text-color);
     font-family: 'Inter', sans-serif;
-    color: var(--text-dark);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.navbar-dark.bg-primary-dark {
-    background-color: var(--dark-blue) !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Navbar */
+.navbar-custom {
+    background-color: var(--primary-color) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.bg-light-blue {
-    background-color: var(--light-blue);
+.navbar-brand, .nav-link {
+    color: #ffffff !important;
 }
 
+.nav-link:hover {
+    color: var(--accent-color) !important;
+}
+
+/* Cards */
 .card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.2s ease-in-out;
+    color: var(--text-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
 }
 
-/* Table Styling */
+.card-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Utilities Override */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Table */
+.table {
+    color: var(--text-color);
+    background-color: var(--table-bg);
+    margin-bottom: 0;
+}
+
+.table > :not(caption) > * > * {
+    background-color: transparent; /* Force transparent cells to show table/card bg */
+    color: var(--text-color);
+    border-bottom-color: var(--border-color);
+}
+
 .table thead th {
-    background-color: var(--dark-blue);
-    border: none;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    padding: 1rem;
+    background-color: var(--table-header-bg) !important; /* Force header bg */
+    color: var(--table-header-text) !important;
+    border-bottom: 2px solid var(--secondary-color);
 }
 
 .table tbody td {
-    padding: 1rem;
-    vertical-align: middle;
+    border-color: var(--border-color);
 }
 
 .project-row {
     transition: all 0.2s ease;
-    cursor: default;
 }
 
 .project-row:hover {
-    background-color: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    background-color: var(--hover-bg) !important; /* Override transparent */
+    transform: scale(1.01);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     z-index: 10;
     position: relative;
+    cursor: pointer;
 }
 
-/* Document Icons */
-.doc-icon {
-    font-size: 1.2rem;
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
-    text-decoration: none;
+/* Project Row Hover Cells */
+.project-row:hover > * {
+    background-color: var(--hover-bg) !important;
+    color: var(--text-color);
 }
 
-.doc-icon.has-doc {
-    background-color: #e7f1ff;
-    color: var(--primary-blue);
-}
-
-.doc-icon.has-doc:hover {
-    background-color: var(--primary-blue);
-    color: white;
-    transform: scale(1.1);
-}
-
-.doc-icon.missing-doc {
-    background-color: #f8f9fa;
-    color: #adb5bd;
-    cursor: help;
-}
-
-/* Progress Bar */
-.progress {
-    background-color: #e9ecef;
-    border-radius: 10px;
-}
-
-.progress-bar {
-    background-color: var(--primary-blue) !important;
-    border-radius: 10px;
-}
 
 /* Form Controls */
-.form-control:focus, .form-select:focus {
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+.form-control, .form-select {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
 }
 
+.form-control:focus, .form-select:focus {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.25rem rgba(0, 116, 217, 0.25);
+}
+
+/* Placeholder color for dark mode forms */
+[data-theme="dark"] .form-control::placeholder {
+    color: #6c757d;
+}
+
+/* Buttons */
 .btn-primary {
-    background-color: var(--primary-blue);
-    border-color: var(--primary-blue);
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 .btn-primary:hover {
-    background-color: var(--dark-blue);
-    border-color: var(--dark-blue);
+    background-color: #001830;
+    border-color: #001830;
+}
+
+/* KPI Cards */
+.kpi-card-text {
+    color: var(--secondary-color);
+}
+
+/* Monitor Button */
+.btn-monitor {
+    background-color: #FF851B; /* Orange for visibility */
+    color: white;
+    font-weight: bold;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.btn-monitor:hover {
+    background-color: #e67300;
+    color: white;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.theme-toggle-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* Document Icons */
+.doc-icon.has-doc {
+    background-color: rgba(0, 116, 217, 0.1);
+    color: var(--secondary-color);
+}
+
+.doc-icon.has-doc:hover {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.doc-icon.missing-doc {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: var(--text-muted);
 }
