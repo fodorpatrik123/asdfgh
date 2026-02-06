@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.developer_name.label }}</label>
+                            {{ form.developer_name(class="form-control") }}
+                            {% for error in form.developer_name.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.requestor.label }}</label>
+                            {{ form.requestor(class="form-control") }}
+                            {% for error in form.requestor.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.status.label }}</label>
+                            {{ form.status(class="form-select") }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.arrival_date.label }}</label>
+                            {{ form.arrival_date(class="form-control", type="date") }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.end_date.label }}</label>
+                            {{ form.end_date(class="form-control", type="date") }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.percentage.label }}</label>
+                            <div class="input-group">
+                                {{ form.percentage(class="form-control") }}
+                                <span class="input-group-text">%</span>
+                            </div>
+                            {% for error in form.percentage.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.fte.label }}</label>
+                            {{ form.fte(class="form-control") }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3 text-muted"><i class="fas fa-paperclip me-2"></i>Dokumentumok</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.doc_business.label }}</label>
+                        {{ form.doc_business(class="form-control") }}
+                        {% for error in form.doc_business.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.doc_test.label }}</label>
+                        {{ form.doc_test(class="form-control") }}
+                        {% for error in form.doc_test.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.doc_ops.label }}</label>
+                        {{ form.doc_ops(class="form-control") }}
+                        {% for error in form.doc_ops.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-light me-2">Mégsem</a>
+                        {{ form.submit(class="btn btn-primary px-4") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
